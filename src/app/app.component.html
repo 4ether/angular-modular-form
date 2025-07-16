@@ -1,0 +1,121 @@
+<div class="container mt-4">
+
+  <!-- Left panel with available components -->
+  <div
+    class="left-panel mb-4 p-3 border rounded"
+    id="availableComponents"
+    cdkDropList
+    [cdkDropListData]="availableComponents"
+    [cdkDropListConnectedTo]="connectedDropListsIds"
+    cdkDropListSortingDisabled
+  >
+    <h5>Available Components</h5>
+    <div
+      *ngFor="let comp of availableComponents"
+      class="component-item p-2 border rounded mb-2 bg-light"
+      cdkDrag
+      [cdkDragData]="comp"
+    >
+      {{ comp.label }}
+    </div>
+  </div>
+
+  <!-- Main form builder area -->
+  <form [formGroup]="form" class="form-builder">
+
+    <button class="btn btn-primary mb-3" type="button" (click)="addRow()">Add Row</button>
+
+    <div
+      *ngFor="let row of rows; let i = index; trackBy: trackByRowId"
+      [@rowAnimation]="row.animationState || 'default'"
+      [id]="row.id"
+      class="row g-2 mb-3 border rounded p-3"
+      cdkDropList
+      [cdkDropListData]="row.components"
+      [cdkDropListConnectedTo]="connectedDropListsIds"
+      (cdkDropListDropped)="drop($event, row)"
+    >
+    <div class="col-1">
+      <button
+        type="button"
+        class="btn btn-sm btn-secondary move-row-btn"
+        (click)="moveRowUp(row)"
+        [disabled]="isFirstRow(row)"
+        title="Move row up"
+      >
+        <i class="fas fa-arrow-up"></i>
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-sm btn-secondary move-row-btn"
+        (click)="moveRowDown(row)"
+        [disabled]="isLastRow(row)"
+        title="Move row down"
+      >
+        <i class="fas fa-arrow-down"></i>
+      </button>
+    </div>
+    <div class="col-10">
+      <!-- Row title -->
+      <label class="form-label fw-bold mb-1">Row {{ i + 1 }}</label>
+      <input
+        type="text"
+        class="form-control mb-3"
+        [(ngModel)]="row.title"
+        placeholder="Row Title"
+      />
+    </div>
+    <div class="col-1">
+      <button
+        type="button"
+        class="btn btn-sm btn-danger remove-row-btn"
+        title="Remove Row"
+      >
+        Delete Row
+      </button>
+    </div>
+      <div
+        *ngFor="let comp of row.components"
+        [ngClass]="getBootstrapColClass(row.components.length)"
+        class="form-component"
+        cdkDrag
+        [cdkDragData]="comp"
+      >
+        <div class="card p-2 h-100 w-100 position-relative">
+          <button
+            class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0"
+            type="button"
+            (click)="removeComponent(row, comp)"
+            style="width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 4px; z-index: 10;"
+            title="Remove Component"
+          >
+            ✕
+          </button>
+
+          <div col="12" class="mb-2">
+            <label class="form-label">{{ comp.label }}</label>
+            <ng-container [ngSwitch]="comp.type">
+              <input
+                *ngSwitchCase="'input'"
+                type="text"
+                class="form-control"
+                [formControlName]="comp.id"
+                placeholder="Text input"
+              />
+              <textarea
+                *ngSwitchCase="'textarea'"
+                class="form-control"
+                [formControlName]="comp.id"
+                placeholder="Text area"
+              ></textarea>
+              <label *ngSwitchCase="'label'" class="form-label mt-2">{{ comp.label }}</label>
+              <div *ngSwitchCase="'infoBox'" class="alert alert-info mt-2">{{ comp.label }}</div>
+            </ng-container>
+          </div>     
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
