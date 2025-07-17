@@ -22,100 +22,242 @@
 
   <!-- Main form builder area -->
   <form [formGroup]="form" class="form-builder">
-
-    <button class="btn btn-primary mb-3" type="button" (click)="addRow()">Add Row</button>
-
-    <div
-      *ngFor="let row of rows; let i = index; trackBy: trackByRowId"
-      [@rowAnimation]="row.animationState || 'default'"
-      [id]="row.id"
-      class="row g-2 mb-3 border rounded p-3"
-      cdkDropList
-      [cdkDropListData]="row.components"
-      [cdkDropListConnectedTo]="connectedDropListsIds"
-      (cdkDropListDropped)="drop($event, row)"
+    <button 
+      [disabled]="showPreview"
+      class="btn btn-primary mb-3" 
+      type="button" 
+      (click)="addRow()">Add Row</button>
+    <button
+      class="btn btn-success mb-3"
+      type="button"
+      (click)="togglePreview()"
     >
-    <div class="col-1">
-      <button
-        type="button"
-        class="btn btn-sm btn-secondary move-row-btn"
-        (click)="moveRowUp(row)"
-        [disabled]="isFirstRow(row)"
-        title="Move row up"
-      >
-        <i class="fas fa-arrow-up"></i>
-      </button>
+      {{ showPreview ? 'Hide' : 'Show' }} Form Preview
+    </button>
 
-      <button
-        type="button"
-        class="btn btn-sm btn-secondary move-row-btn"
-        (click)="moveRowDown(row)"
-        [disabled]="isLastRow(row)"
-        title="Move row down"
-      >
-        <i class="fas fa-arrow-down"></i>
-      </button>
-    </div>
-    <div class="col-10">
-      <!-- Row title -->
-      <label class="form-label fw-bold mb-1">Row {{ i + 1 }}</label>
-      <input
-        type="text"
-        class="form-control mb-3"
-        [(ngModel)]="row.title"
-        placeholder="Row Title"
-      />
-    </div>
-    <div class="col-1">
-      <button
-        type="button"
-        class="btn btn-sm btn-danger remove-row-btn"
-        title="Remove Row"
-      >
-        Delete Row
-      </button>
-    </div>
-      <div
-        *ngFor="let comp of row.components"
-        [ngClass]="getBootstrapColClass(row.components.length)"
-        class="form-component"
-        cdkDrag
-        [cdkDragData]="comp"
-      >
-        <div class="card p-2 h-100 w-100 position-relative">
-          <button
-            class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0"
-            type="button"
-            (click)="removeComponent(row, comp)"
-            style="width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 4px; z-index: 10;"
-            title="Remove Component"
-          >
-            ✕
-          </button>
-
-          <div col="12" class="mb-2">
-            <label class="form-label">{{ comp.label }}</label>
-            <ng-container [ngSwitch]="comp.type">
-              <input
-                *ngSwitchCase="'input'"
-                type="text"
-                class="form-control"
-                [formControlName]="comp.id"
-                placeholder="Text input"
-              />
-              <textarea
-                *ngSwitchCase="'textarea'"
-                class="form-control"
-                [formControlName]="comp.id"
-                placeholder="Text area"
-              ></textarea>
-              <label *ngSwitchCase="'label'" class="form-label mt-2">{{ comp.label }}</label>
-              <div *ngSwitchCase="'infoBox'" class="alert alert-info mt-2">{{ comp.label }}</div>
-            </ng-container>
-          </div>     
+    <!-- Show form preview -->
+    <ng-container *ngIf="showPreview">
+      <h5 class="mb-3">Form Preview</h5>
+      <div class="card">
+        <div class="card-body">
+          <div *ngIf="rows.length === 0">
+            <p class="text-muted">Mohon tambahkan component di form builder</p>
+          </div>
+          <form [formGroup]="form">
+            <div *ngFor="let row of rows">
+              <div class="mb-3">
+                <div class="row">
+                  <div
+                    *ngFor="let comp of row.components"
+                    [ngClass]="getBootstrapColClass(row.components.length)"
+                    class="mb-2"
+                  >
+                    <ng-container [ngSwitch]="comp.type">
+                      <input
+                        *ngSwitchCase="'input'"
+                        type="text"
+                        class="form-control"
+                        [formControlName]="comp.id"
+                        [placeholder]="comp.label"
+                      />
+                      <input
+                        *ngSwitchCase="'date'"
+                        type="date"
+                        class="form-control"
+                        [formControlName]="comp.id"
+                        [placeholder]="comp.label"
+                      />
+                      <textarea
+                        *ngSwitchCase="'textarea'"
+                        class="form-control"
+                        [formControlName]="comp.id"
+                        [placeholder]="comp.label"
+                      ></textarea>
+                      <label *ngSwitchCase="'label'" class="form-label mt-2">{{ comp.label }}</label>
+                      <div *ngSwitchCase="'infoBox'" class="alert alert-info mt-2">{{ comp.label }}</div>
+                      <div *ngSwitchCase="'buttonGroup'" class="w-100 text-center my-3">
+                        <button 
+                          type="button" 
+                          class="btn mx-2 flex-btn"
+                        >
+                          Batal
+                        </button>
+                        <button 
+                          type="submit" 
+                          class="btn mx-2 flex-btn"
+                        >
+                          Submit
+                        </button>
+                        <style>
+                          .flex-btn {
+                            min-width: 100px;
+                            max-width: 100%;
+                            width: 120px;
+                            background-color: #fff;
+                            border: 1px solid #03337B;
+                            color: #03337B;
+                            font-weight: bold;
+                          }
+                          .flex-btn[type="submit"] {
+                            background-color: #03337B;
+                            color: #fff;
+                            font-weight: bold;
+                          }
+                          @media (max-width: 576px) {
+                            .flex-btn {
+                              width: 100%;
+                              min-width: 0;
+                              margin-bottom: 8px;
+                              font-weight: bold;
+                            }
+                          }
+                        </style>
+                      </div>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
+    </ng-container>
 
+    <!-- Editable form rows -->
+    <ng-container  *ngIf="!showPreview">  
+      <div *ngIf="rows.length === 0" class="alert alert-info">
+        <h5>Tambah row dengan klik button add row</h5>
+      </div>
+      <div
+        *ngFor="let row of rows; let i = index; trackBy: trackByRowId"
+        [@rowAnimation]
+        [id]="row.id"
+        class="row g-2 mb-3 border rounded p-3"
+        cdkDropList
+        [cdkDropListData]="row.components"
+        [cdkDropListConnectedTo]="connectedDropListsIds"
+        (cdkDropListDropped)="drop($event, row)"
+      >
+      <div class="col-1">
+        <button
+          type="button"
+          class="btn btn-sm btn-secondary move-row-btn"
+          (click)="moveRowUp(row)"
+          [disabled]="isFirstRow(row)"
+          title="Move row up"
+        >
+          <i class="fas fa-arrow-up"></i>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-sm btn-secondary move-row-btn"
+          (click)="moveRowDown(row)"
+          [disabled]="isLastRow(row)"
+          title="Move row down"
+        >
+          <i class="fas fa-arrow-down"></i>
+        </button>
+      </div>
+      <div class="col-10">
+        <h5>Row</h5>
+      </div>
+      <div class="col-1">
+        <button
+          type="button"
+          class="btn btn-sm btn-danger remove-row-btn"
+          title="Remove Row"
+          (click)="removeRow(row)"
+        >
+          Delete Row
+        </button>
+      </div>
+        <div
+          *ngFor="let comp of row.components"
+          [ngClass]="getBootstrapColClass(row.components.length)"
+          class="form-component"
+          cdkDrag
+          [cdkDragData]="comp"
+        >
+          <div class="card p-2 h-100 w-100 position-relative">
+            <button
+              class="btn btn-sm btn-danger position-absolute top-0 end-0 p-0"
+              type="button"
+              (click)="removeComponent(row, comp)"
+              style="width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 4px; z-index: 10;"
+              title="Remove Component"
+            >
+              ✕
+            </button>
+
+            <div col="12" class="mb-2">
+              <label class="form-label">{{ comp.label }}</label>
+              <ng-container [ngSwitch]="comp.type">
+                <input
+                  *ngSwitchCase="'input'"
+                  type="text"
+                  class="form-control"
+                  [formControlName]="comp.id"
+                  placeholder="Text input"
+                />
+                <input
+                  *ngSwitchCase="'date'"
+                  type="date"
+                  class="form-control"
+                  [formControlName]="comp.id"
+                  [placeholder]="comp.label"
+                />
+                <textarea
+                  *ngSwitchCase="'textarea'"
+                  class="form-control"
+                  [formControlName]="comp.id"
+                  placeholder="Text area"
+                ></textarea>
+                <label *ngSwitchCase="'label'" class="form-label mt-2">{{ comp.label }}</label>
+                <div *ngSwitchCase="'infoBox'" class="alert alert-info mt-2">{{ comp.label }}</div>
+                <div *ngSwitchCase="'buttonGroup'" class="w-100 text-center my-3">
+                  <button 
+                    type="button" 
+                    class="btn mx-2 flex-btn"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    type="submit" 
+                    class="btn mx-2 flex-btn"
+                  >
+                    Submit
+                  </button>
+                  <style>
+                    .flex-btn {
+                      min-width: 100px;
+                      max-width: 100%;
+                      width: 120px;
+                      background-color: #fff;
+                      border: 1px solid #03337B;
+                      color: #03337B;
+                      font-weight: bold;
+                    }
+                    .flex-btn[type="submit"] {
+                      background-color: #03337B;
+                      color: #fff;
+                      font-weight: bold;
+                    }
+                    @media (max-width: 576px) {
+                      .flex-btn {
+                        width: 100%;
+                        min-width: 0;
+                        margin-bottom: 8px;
+                        font-weight: bold;
+                      }
+                    }
+                  </style>
+                </div>
+              </ng-container>
+            </div>     
+          </div>
+        </div>
+      </div>
+    </ng-container>
   </form>
 </div>
