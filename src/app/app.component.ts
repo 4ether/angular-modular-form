@@ -7,14 +7,19 @@ interface FormComponent {
   id: string;
   type: any;
   label: string;
+  comp_uuid?: string;
+  options?: string[]; // For radio group or select
+  orientation?: string; // For radio group
 }
 
 interface FormRow {
   id: string;
   title: string;
   components: FormComponent[];
+  uuid: string;
   animationState?: 'default' | 'up' | 'down';
 }
+
 
 @Component({
   selector: 'app-root',
@@ -44,16 +49,27 @@ interface FormRow {
 })
 export class AppComponent {
 
+  selectedComponent: FormComponent | null = null;
+
   showPreview = false;
 
   title = 'dynamic-form-builder';
+  
 
   availableComponents: FormComponent[] = [
     { id: 'comp_1', type: 'input', label: 'Text Input' },
     { id: 'comp_2', type: 'textarea', label: 'Text Area' },
-    { id: 'comp_3', type: 'infoBox', label: 'Info Box' },
-    { id: 'comp_4', type: 'buttonGroup', label: 'Button Group' },
-    { id: 'comp_5', type: 'date', label: 'Date Picker' }
+    { id: 'comp_3', type: 'date', label: 'Date Picker' },
+    { id: 'comp_4', type: 'infoBox', label: 'Info Box' },
+    { id: 'comp_5', type: 'buttonGroup', label: 'Button Group' },
+    { id: 'comp_6', type: 'file', label: 'File Upload' },
+    { 
+      id: 'comp_7', 
+      type: 'radioGroup', 
+      label: 'Radio Group', 
+      options: ['Option 1', 'Option 2'], 
+      orientation: 'horizontal' 
+    }
   ];
 
   rows: FormRow[] = [];
@@ -61,35 +77,105 @@ export class AppComponent {
 
   constructor(private fb: FormBuilder) {}
 
+  generateUUID(): string {
+    // Generates a random UUID v4
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+
+  generateUniqueCompUUID(): string {
+    let uuid: string;
+    do {
+      uuid = this.generateUUID();
+    } while (this.isCompUUIDExists(uuid));
+    return uuid;
+  }
+
+  isCompUUIDExists(uuid: string): boolean {
+    return this.rows.some(row =>
+      row.components.some(comp => comp.comp_uuid === uuid)
+    );
+  }
+
   addRow() {
-    const newRow: FormRow = { id: 'row_' + Date.now(), title: 'Untitled Row', components: [] };
+    const newRow: FormRow = { id: 'row_' + Date.now(), title: 'Untitled Row', components: [], uuid: this.generateUniqueCompUUID() };
     this.rows.push(newRow);
   }
+
+  // savePreset() {
+  //   const formPreset = this.getFormPreset();
+  //   // Send formPreset to your backend here
+  //   console.log('Preset to send:', formPreset);
+  // }
+
+  selectComponent(comp: FormComponent) {
+    this.selectedComponent = comp;
+  }
+
+  // getFormPreset() {
+  //   return {
+  //     rows: this.rows
+  //   };
+  // }
 
   drop(event: CdkDragDrop<FormComponent[]>, row: FormRow) {
     if (!row) return;
 
     // Prevent adding more than 12 components
     if (row.components.length >= 12 && event.previousContainer !== event.container) {
-      // Optionally, show a message to the user here
       return;
     }
 
     if (event.previousContainer === event.container) {
       // Reordering inside the same row (optional)
+      // You can use moveItemInArray if you want to support reordering
+      // moveItemInArray(row.components, event.previousIndex, event.currentIndex);
     } else {
-      const originalComp = event.previousContainer.data[event.previousIndex];
-      const compCopy: FormComponent = {
-        ...originalComp,
-        id: `${originalComp.id}_${Date.now()}`
-      };
-
-      // Add to the form group if applicable
-      if (compCopy.type === 'input' || compCopy.type === 'date' || compCopy.type === 'textarea') {
-        this.form.addControl(compCopy.id, new FormControl(''));
+      // Remove from previous row
+      const prevRow = this.rows.find(r => r.components === event.previousContainer.data);
+      if (prevRow) {
+        const [removed] = prevRow.components.splice(event.previousIndex, 1);
+        row.components.splice(event.currentIndex, 0, removed);
+      } else {
+        // If dragging from availableComponents, clone as before
+        const originalComp = event.previousContainer.data[event.previousIndex];
+        const compCopy: FormComponent = {
+          ...originalComp,
+          id: `${originalComp.id}_${Date.now()}`,
+          comp_uuid: this.generateUniqueCompUUID()
+        };
+        if (
+          compCopy.type === 'input' ||
+          compCopy.type === 'infoBox' ||
+          compCopy.type === 'date' ||
+          compCopy.type === 'textarea' ||
+          compCopy.type === 'file' ||
+          compCopy.type === 'buttonGroup' ||
+          compCopy.type === 'radioGroup'
+        ) {
+          this.form.addControl(compCopy.id, new FormControl(''));
+        }
+        row.components.splice(event.currentIndex, 0, compCopy);
       }
+    }
+  }
 
-      row.components.splice(event.currentIndex, 0, compCopy);
+  trackByIndex(index: number, item: any) {
+    return index;
+  }
+
+  addRadioOption(comp: FormComponent) {
+    if (comp.options) {
+      comp.options = [...comp.options, 'New Option'];
+    }
+  }
+
+  removeRadioOption(comp: FormComponent, idx: number) {
+    if (comp.options) {
+      comp.options = comp.options.filter((_, i) => i !== idx);
     }
   }
 
@@ -124,6 +210,18 @@ export class AppComponent {
 
   get connectedDropListsIds(): string[] {
     return ['availableComponents', ...this.rows.map(r => r.id)];
+  }
+
+  get formValueByRow() {
+    return this.rows.map(row => {
+      const rowObj: { [key: string]: any } = {};
+      row.components.forEach(comp => {
+        if (this.form.contains(comp.id)) {
+          rowObj[comp.id] = this.form.get(comp.id)?.value;
+        }
+      });
+      return rowObj;
+    });
   }
 
   getBootstrapColClass(count: number): string {

@@ -48,3 +48,31 @@
   border-radius: 4px;
   cursor: move;
 }
+
+.form-component.selected {
+  border: 2px solid #007bff;
+  box-shadow: 0 0 0 2px #007bff33;
+}
+
+.flex-btn {
+  min-width: 100px;
+  max-width: 100%;
+  width: 140px;
+  background-color: #fff;
+  border: 1px solid #03337B;
+  color: #03337B;
+  font-weight: bold;
+}
+.flex-btn[type="submit"] {
+  background-color: #03337B;
+  color: #fff;
+  font-weight: bold;
+}
+@media (max-width: 576px) {
+  .flex-btn {
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+}

@@ -18,6 +18,18 @@
     >
       {{ comp.label }}
     </div>
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5>Form Data</h5>
+        <pre>{{ formValueByRow | json }}</pre>
+      </div>
+    </div>
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5>Form Preset Data to BE</h5>
+        <pre>{{ rows | json }}</pre>
+      </div>
+    </div>
   </div>
 
   <!-- Main form builder area -->
@@ -67,6 +79,12 @@
                         [formControlName]="comp.id"
                         [placeholder]="comp.label"
                       />
+                      <input
+                        *ngSwitchCase="'file'"
+                        type="file"
+                        class="form-control"
+                        [formControlName]="comp.id"
+                      />
                       <textarea
                         *ngSwitchCase="'textarea'"
                         class="form-control"
@@ -79,39 +97,33 @@
                         <button 
                           type="button" 
                           class="btn mx-2 flex-btn"
+                          (click)="form.get(comp.id)?.setValue('Batal')"
                         >
                           Batal
                         </button>
                         <button 
                           type="submit" 
                           class="btn mx-2 flex-btn"
+                          (click)="form.get(comp.id)?.setValue('Submit')"
                         >
                           Submit
                         </button>
-                        <style>
-                          .flex-btn {
-                            min-width: 100px;
-                            max-width: 100%;
-                            width: 120px;
-                            background-color: #fff;
-                            border: 1px solid #03337B;
-                            color: #03337B;
-                            font-weight: bold;
-                          }
-                          .flex-btn[type="submit"] {
-                            background-color: #03337B;
-                            color: #fff;
-                            font-weight: bold;
-                          }
-                          @media (max-width: 576px) {
-                            .flex-btn {
-                              width: 100%;
-                              min-width: 0;
-                              margin-bottom: 8px;
-                              font-weight: bold;
-                            }
-                          }
-                        </style>
+                      </div>
+                      <div *ngSwitchCase="'radioGroup'" class="mb-2">
+                        <div [ngClass]="comp.orientation === 'vertical' ? 'd-flex flex-column' : 'd-flex flex-row'">
+                          <div *ngFor="let opt of comp.options; let idx = index" class="form-check me-3">
+                            <input
+                              class="form-check-input"
+                              type="radio"
+                              [formControlName]="comp.id"
+                              [id]="comp.id + '_opt_' + idx"
+                              [value]="opt"
+                            />
+                            <label class="form-check-label" [for]="comp.id + '_opt_' + idx">
+                              {{ opt }}
+                            </label>
+                          </div>
+                        </div>
                       </div>
                     </ng-container>
                   </div>
@@ -178,6 +190,8 @@
           class="form-component"
           cdkDrag
           [cdkDragData]="comp"
+          (click)="selectComponent(comp)"
+          [class.selected]="selectedComponent === comp"
         >
           <div class="card p-2 h-100 w-100 position-relative">
             <button
@@ -207,6 +221,12 @@
                   [formControlName]="comp.id"
                   [placeholder]="comp.label"
                 />
+                <input
+                  *ngSwitchCase="'file'"
+                  type="file"
+                  class="form-control"
+                  [formControlName]="comp.id"
+                />
                 <textarea
                   *ngSwitchCase="'textarea'"
                   class="form-control"
@@ -218,40 +238,34 @@
                 <div *ngSwitchCase="'buttonGroup'" class="w-100 text-center my-3">
                   <button 
                     type="button" 
-                    class="btn mx-2 flex-btn"
+                    class="btn mx-2 flex-btn buttonCancel"
+                    (click)="form.get(comp.id)?.setValue('Batal')"
                   >
                     Batal
                   </button>
                   <button 
                     type="submit" 
-                    class="btn mx-2 flex-btn"
+                    class="btn mx-2 flex-btn buttonSubmit"
+                    (click)="form.get(comp.id)?.setValue('Submit')"
                   >
                     Submit
                   </button>
-                  <style>
-                    .flex-btn {
-                      min-width: 100px;
-                      max-width: 100%;
-                      width: 120px;
-                      background-color: #fff;
-                      border: 1px solid #03337B;
-                      color: #03337B;
-                      font-weight: bold;
-                    }
-                    .flex-btn[type="submit"] {
-                      background-color: #03337B;
-                      color: #fff;
-                      font-weight: bold;
-                    }
-                    @media (max-width: 576px) {
-                      .flex-btn {
-                        width: 100%;
-                        min-width: 0;
-                        margin-bottom: 8px;
-                        font-weight: bold;
-                      }
-                    }
-                  </style>
+                </div>
+                <div *ngSwitchCase="'radioGroup'" class="mb-2">
+                  <div [ngClass]="comp.orientation === 'vertical' ? 'd-flex flex-column' : 'd-flex flex-row'">
+                    <div *ngFor="let opt of comp.options; let idx = index" class="form-check me-3">
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        [formControlName]="comp.id"
+                        [id]="comp.id + '_opt_' + idx"
+                        [value]="opt"
+                      />
+                      <label class="form-check-label" [for]="comp.id + '_opt_' + idx">
+                        {{ opt }}
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </ng-container>
             </div>     
@@ -260,4 +274,37 @@
       </div>
     </ng-container>
   </form>
+
+  <div *ngIf="!showPreview" class="left-panel mt-0 p-3 border rounded">
+    <h5>Components Settings</h5>
+    <ng-container *ngIf="selectedComponent as comp; else noSelection">
+      <div class="mb-2">
+        <label>Label</label>
+        <input class="form-control" [(ngModel)]="comp.label" />
+      </div>
+      <div class="mb-2">
+        <label>FormControl Name (ID)</label>
+        <input class="form-control" [(ngModel)]="comp.id" />
+      </div>
+      <div class="mb-2" *ngIf="comp.type === 'radioGroup'">
+        <label>Orientation</label>
+        <select class="form-select" [(ngModel)]="comp.orientation">
+          <option value="horizontal">Horizontal</option>
+          <option value="vertical">Vertical</option>
+        </select>
+      </div>
+      <div class="mb-2" *ngIf="comp.type === 'radioGroup'">
+        <label>Radio Options</label>
+        <div *ngFor="let opt of comp.options; let idx = index; trackBy: trackByIndex" class="d-flex mb-1">
+          <input class="form-control me-2" [(ngModel)]="comp.options![idx]" />
+          <button class="btn btn-danger btn-sm" (click)="removeRadioOption(comp, idx)">✕</button>
+        </div>
+        <button class="btn btn-primary btn-sm" (click)="addRadioOption(comp)">Add Option</button>
+      </div>
+      <!-- Add more settings as needed (ngIf, ngFor, etc.) -->
+    </ng-container>
+    <ng-template #noSelection>
+      <div class="text-muted">Select a component to edit its settings.</div>
+    </ng-template>
+  </div>
 </div>
