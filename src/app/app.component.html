@@ -181,9 +181,13 @@
           title="Remove Row"
           (click)="removeRow(row)"
         >
-          Delete Row
+          <i class="fas fa-trash"></i>
         </button>
       </div>
+      <br>
+      <br>
+      <br>
+      <hr>
         <div
           *ngFor="let comp of row.components"
           [ngClass]="getBootstrapColClass(row.components.length)"
